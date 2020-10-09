@@ -8,11 +8,11 @@ enum Status {
 }
 
 Router.get('/liveness', (req: Request, res: Response) => {
-  return res.status(200).send({ status: Status.ALIVE })
+  return res.status(200).send({ status: Status.ALIVE, asOf: new Date() })
 })
 
 Router.get('/readiness', (req: Request, res: Response) => {
-  return res.status(200).send({ status: Status.READY })
+  return res.status(200).send({ status: Status.READY, asOf: new Date() })
 })
 
 export default Router
