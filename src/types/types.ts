@@ -1,8 +1,8 @@
 export type ValueOf<T> = T[keyof T]
 export type AlphaNumeric = string | number
 export enum QueryEvent {
-  CROSS_OVER = 'CROSS_OVER',
-  CROSS_UNDER = 'CROSS_UNDER',
+  CROSS_OVER = 'crossOver',
+  CROSS_UNDER = 'crossUnder',
 }
 
 export enum Ref {
@@ -20,7 +20,7 @@ export enum Timeframe {
 }
 
 export interface Bar {
-  startEpochTime: number
+  date: Date
   openPrice: number
   highPrice: number
   lowPrice: number
@@ -35,7 +35,7 @@ export interface ConditionBranch {
 }
 
 export interface Result {
-  barTime: Date
+  date: Date
   meta: ConditionBranch
   result: any
 }
@@ -44,20 +44,10 @@ export interface Query {
   condition: {
     source: ConditionBranch
     target: ConditionBranch
-    event: ValueOf<QueryEvent>
+    event: string
   }
   symbol: string
-  timeframe: ValueOf<Timeframe>
-  startDate: Date
-  endDate: Date
+  timeframe: string
+  startDate: string
+  endDate: string
 }
-
-// {
-//     active: true,
-//     _id: 5f7e59c65453d12d591b79e3,
-//     symbol: 'F',
-//     timeframe: '5Min',
-//     message: 'F volume(current) cross_over volume(5000)',
-//     entryDate: 2020-10-08T00:13:58.532Z,
-//     __v: 0
-//   }

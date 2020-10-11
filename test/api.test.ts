@@ -1,4 +1,4 @@
-import { Query, Ref, QueryEvent } from '../src/types/types'
+import { Query, Ref, QueryEvent, Timeframe } from '../src/types/types'
 import request from 'supertest'
 import app from '../src/app'
 
@@ -19,9 +19,9 @@ describe('GET /indicators/query', () => {
         event: QueryEvent.CROSS_OVER,
       },
       symbol: 'ZM',
-      timeframe: '5Min',
-      startDate: new Date(),
-      endDate: new Date(),
+      timeframe: Timeframe.MINUTE_5,
+      startDate: '2020-10-07T13:30:00.000Z',
+      endDate: '2020-10-07T20:00:00.000Z',
     }
 
     return request(app).get('/indicators/query').send(marketQuery).expect(200)

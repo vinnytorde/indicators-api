@@ -1,13 +1,59 @@
-import technicalIndicators from 'technicalindicators'
-import { Bar, Result, AlphaNumeric } from '../types/types'
+import * as technicalIndicators from 'technicalindicators'
+import { Bar, Result, AlphaNumeric, QueryEvent } from '../types/types'
 
 const open = (bar: Bar) => bar.openPrice
 
-function crossOver(source: Array<number>, target: Array<number>) {
-  return technicalIndicators.crossUp({
-    lineA: target,
-    lineB: source,
-  })
+const stringifyTest = (source: Result, target: Result, eventName: string) => {
+  return `${source.meta.ref} ${source.meta.type}(${source.meta.value}) ${eventName} ${target.meta.ref} ${target.meta.type}(${target.meta.value})`
+}
+
+const normalizeResult = (
+  source: Array<Result>,
+  target: Array<Result>
+): { sourceBars: Array<Result>; targetBars: Array<Result> } => {
+  const sortByOldest = (a: Result, b: Result): number =>
+    a.date.getTime() - b.date.getTime()
+  let targetBars = [...target].sort(sortByOldest)
+  let sourceBars = [...source].sort(sortByOldest)
+
+  while (sourceBars.length !== targetBars.length) {
+    let longest =
+      sourceBars.length > targetBars.length ? sourceBars : targetBars
+    longest.shift()
+  }
+
+  return { sourceBars, targetBars }
+}
+
+function crossOver(
+  source: Array<Result>,
+  target: Array<Result>
+): Array<Result> {
+  let { sourceBars, targetBars } = normalizeResult(source, target)
+
+  let resultSet = technicalIndicators
+    .crossUp({
+      lineA: targetBars.map(resultEntry => {
+        return resultEntry.result
+      }),
+      lineB: sourceBars.map(resultEntry => {
+        return resultEntry.result
+      }),
+    })
+    .map((crossUpValue, index) => {
+      let resultEntry = {
+        meta: {
+          ref: 'test',
+          type: 'result',
+          value: stringifyTest(source[0], target[0], QueryEvent.CROSS_OVER),
+        },
+        result: crossUpValue,
+        date: sourceBars[index].date,
+      }
+      return resultEntry
+    })
+
+  return resultSet
 }
 
 function EMA(period: number, dataset: Array<Bar>): Array<Result> {
@@ -25,9 +71,8 @@ function EMA(period: number, dataset: Array<Bar>): Array<Result> {
         value: period,
       },
       result: result[index],
-      barTime: new Date(dataPoint.startEpochTime * 1000),
+      date: dataPoint.date,
     }
-    console.log(resultEntry)
     return resultEntry
   })
 
@@ -48,7 +93,7 @@ function SMA(period: number, dataset: Array<Bar>): Array<Result> {
         value: period,
       },
       result: result[index],
-      barTime: new Date(dataPoint.startEpochTime * 1000),
+      date: dataPoint.date,
     }
 
     return resultEntry
@@ -76,7 +121,7 @@ function price(type: AlphaNumeric, dataset: Array<Bar>): Array<Result> {
       value: type,
     },
     result: getResult(dataPoint),
-    barTime: new Date(dataPoint.startEpochTime * 1000),
+    date: dataPoint.date,
   }))
 
   return resultSet
@@ -86,7 +131,8 @@ export const indicators: Map<string, Function> = new Map<string, Function>()
 
 export const events: Map<string, Function> = new Map<string, Function>()
 
-events.set('crossOver', crossOver)
+events.set(QueryEvent.CROSS_OVER, crossOver)
+
 indicators.set('price', price)
 indicators.set('EMA', EMA)
 indicators.set('SMA', SMA)
