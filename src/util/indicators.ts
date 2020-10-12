@@ -1,24 +1,35 @@
 import * as technicalIndicators from 'technicalindicators'
-import { Bar, Result, AlphaNumeric, QueryEvent } from '../types/types'
+import {
+  Bar,
+  Result,
+  AlphaNumeric,
+  QueryEvent,
+  Indicators,
+  Ref,
+  Prices,
+} from '../types/types'
 
-const open = (bar: Bar) => bar.openPrice
+const closePrice = (bar: Bar) => bar.closePrice
+const openPrice = (bar: Bar) => bar.openPrice
 
 const stringifyTest = (source: Result, target: Result, eventName: string) => {
   return `${source.meta.ref} ${source.meta.type}(${source.meta.value}) ${eventName} ${target.meta.ref} ${target.meta.type}(${target.meta.value})`
 }
 
-const normalizeResult = (
+const normalizeDates = (
   source: Array<Result>,
   target: Array<Result>
 ): { sourceBars: Array<Result>; targetBars: Array<Result> } => {
   const sortByOldest = (a: Result, b: Result): number =>
     a.date.getTime() - b.date.getTime()
-  let targetBars = [...target].sort(sortByOldest)
+
   let sourceBars = [...source].sort(sortByOldest)
+  let targetBars = [...target].sort(sortByOldest)
 
   while (sourceBars.length !== targetBars.length) {
     let longest =
       sourceBars.length > targetBars.length ? sourceBars : targetBars
+
     longest.shift()
   }
 
@@ -29,14 +40,14 @@ function crossOver(
   source: Array<Result>,
   target: Array<Result>
 ): Array<Result> {
-  let { sourceBars, targetBars } = normalizeResult(source, target)
+  let { sourceBars, targetBars } = normalizeDates(source, target)
 
-  let resultSet = technicalIndicators
+  return technicalIndicators
     .crossUp({
-      lineA: targetBars.map(resultEntry => {
+      lineA: sourceBars.map(resultEntry => {
         return resultEntry.result
       }),
-      lineB: sourceBars.map(resultEntry => {
+      lineB: targetBars.map(resultEntry => {
         return resultEntry.result
       }),
     })
@@ -52,18 +63,15 @@ function crossOver(
       }
       return resultEntry
     })
-
-  return resultSet
 }
 
 function EMA(period: number, dataset: Array<Bar>): Array<Result> {
   let result = technicalIndicators.ema({
     period,
-    values: dataset.map(open),
-    reversedInput: true,
+    values: dataset.map(closePrice),
   })
 
-  let resultSet = dataset.slice(period - 1).map((dataPoint, index) => {
+  return dataset.slice(period - 1).map((dataPoint, index) => {
     let resultEntry = {
       meta: {
         ref: 'indicator',
@@ -75,21 +83,19 @@ function EMA(period: number, dataset: Array<Bar>): Array<Result> {
     }
     return resultEntry
   })
-
-  return resultSet
 }
 
-function SMA(period: number, dataset: Array<Bar>): Array<Result> {
+function MA(period: number, dataset: Array<Bar>): Array<Result> {
   let result = technicalIndicators.sma({
     period,
-    values: dataset.map(open),
+    values: dataset.map(closePrice),
   })
 
-  let resultSet = dataset.slice(period - 1).map((dataPoint, index) => {
+  return dataset.slice(period - 1).map((dataPoint, index) => {
     let resultEntry = {
       meta: {
-        ref: 'indicator',
-        type: 'SMA',
+        ref: Ref.INDICATOR,
+        type: Indicators.MA,
         value: period,
       },
       result: result[index],
@@ -98,33 +104,29 @@ function SMA(period: number, dataset: Array<Bar>): Array<Result> {
 
     return resultEntry
   })
-
-  return resultSet
 }
 
-function price(type: AlphaNumeric, dataset: Array<Bar>): Array<Result> {
+function price(value: AlphaNumeric, dataset: Array<Bar>): Array<Result> {
   let getResult = (dataPoint: Bar): number => {
-    if (typeof type === 'number') {
-      return type
+    if (value === Prices.OPEN) {
+      return openPrice(dataPoint)
     }
-    if (typeof type === 'string') {
-      if (type === 'current') {
-        return open(dataPoint)
-      }
+    if (value === Prices.CLOSE) {
+      return closePrice(dataPoint)
     }
   }
 
-  let resultSet = dataset.map(dataPoint => ({
+  let result = dataset.map(dataPoint => ({
     meta: {
-      ref: 'indicator',
-      type: 'price',
-      value: type,
+      ref: Ref.INDICATOR,
+      type: Indicators.PRICE,
+      value,
     },
     result: getResult(dataPoint),
     date: dataPoint.date,
   }))
 
-  return resultSet
+  return result
 }
 
 export const indicators: Map<string, Function> = new Map<string, Function>()
@@ -133,6 +135,6 @@ export const events: Map<string, Function> = new Map<string, Function>()
 
 events.set(QueryEvent.CROSS_OVER, crossOver)
 
-indicators.set('price', price)
-indicators.set('EMA', EMA)
-indicators.set('SMA', SMA)
+indicators.set(Indicators.PRICE, price)
+indicators.set(Indicators.EMA, EMA)
+indicators.set(Indicators.MA, MA)

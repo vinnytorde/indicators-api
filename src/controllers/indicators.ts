@@ -1,30 +1,36 @@
 'use strict'
 
 import { Response, Request } from 'express'
-import { Query, ConditionBranch, Bar, Result } from 'types'
+import { Comparison, ConditionBranch, Bar, Result, Query } from 'types'
 import { indicators, events } from '../util/indicators'
 import * as marketDataController from './market-data'
+
 /**
- * Compute query and return result set
- * @route GET /indicators/query
+ * @route GET /indicators/compare
  */
-export const query = async (req: Request, res: Response) => {
-  const query: Query = req.body
+export const compare = async (req: Request, res: Response) => {
+  const compareQuery: Comparison = req.body
 
   const request: marketDataController.BarsRequest = {
-    timeframe: query.timeframe,
-    symbol: [query.symbol],
+    timeframe: compareQuery.timeframe,
+    symbol: [compareQuery.symbol],
     config: {
-      start: query.startDate,
-      end: query.endDate,
+      start: compareQuery.startDate,
+      end: compareQuery.endDate,
     },
   }
 
   const dataset = await marketDataController.getBars(request)
 
-  const { event, source, target } = query.condition
-  const sourceResult = processIndicator(source, dataset.get(query.symbol))
-  const targetResult = processIndicator(target, dataset.get(query.symbol))
+  const { event, source, target } = compareQuery.condition
+  const sourceResult = processIndicator(
+    source,
+    dataset.get(compareQuery.symbol)
+  )
+  const targetResult = processIndicator(
+    target,
+    dataset.get(compareQuery.symbol)
+  )
 
   const result: Array<Result> = processTriggerEvent(
     event,
@@ -32,13 +38,33 @@ export const query = async (req: Request, res: Response) => {
     targetResult
   )
 
-  // res.status(200).send(sourceResult)
-  res.status(200).send(
-    sourceResult
-      .filter(r => r.result)
-      .map(result => {
-        return { ...result, date: result.date.toString() }
-      })
+  res.status(200).send(result)
+}
+
+export const query = async (req: Request, res: Response) => {
+  const marketQuery: Query = req.body
+
+  const request: marketDataController.BarsRequest = {
+    timeframe: marketQuery.timeframe,
+    symbol: [marketQuery.symbol],
+    config: {
+      start: marketQuery.startDate,
+      end: marketQuery.endDate,
+    },
+  }
+
+  const { query } = marketQuery
+
+  const dataset = await marketDataController.getBars(request)
+  const result = processIndicator(query, dataset.get(marketQuery.symbol))
+
+  return res.status(200).send(
+    result.map(entry => {
+      return {
+        ...entry,
+        symbol: marketQuery.symbol,
+      }
+    })
   )
 }
 

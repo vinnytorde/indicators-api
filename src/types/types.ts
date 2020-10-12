@@ -11,12 +11,25 @@ export enum Ref {
   VOLUME = 'VOLUME',
 }
 
+export enum Indicators {
+  EMA = 'EMA',
+  MA = 'MA',
+  PRICE = 'PRICE',
+}
+
 export enum Timeframe {
   MINUTE_1 = '1Min',
   MINUTE_5 = '5Min',
   MINUTE_15 = '15Min',
   DAY = 'day',
   DAY_1 = '1D',
+}
+
+export enum Prices {
+  HIGH = 'HIGH',
+  LOW = 'LOW',
+  OPEN = 'OPEN',
+  CLOSE = 'CLOSE',
 }
 
 export interface Bar {
@@ -31,7 +44,7 @@ export interface Bar {
 export interface ConditionBranch {
   ref: ValueOf<Ref>
   type: string
-  value: string | number
+  value?: string | number
 }
 
 export interface Result {
@@ -40,12 +53,21 @@ export interface Result {
   result: any
 }
 
-export interface Query {
+export interface Comparison {
   condition: {
     source: ConditionBranch
     target: ConditionBranch
     event: string
   }
+  symbol: string
+  timeframe: string
+  startDate: string
+  endDate: string
+}
+
+export interface Query {
+  query: ConditionBranch
+
   symbol: string
   timeframe: string
   startDate: string

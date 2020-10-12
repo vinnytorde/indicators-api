@@ -15,4 +15,17 @@ app.use(lusca.xssProtection(true))
 app.use('/health', health)
 app.use('/indicators', indicators)
 
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    res.status(500).send({
+      message: err.message,
+    })
+  }
+)
+
 export default app
