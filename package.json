@@ -1,11 +1,9 @@
 {
     "name": "indicator-api",
     "version": "0.1.0",
-    "description": "A starting point for Node.js express apps with TypeScript",
-    "license": "MIT",
+    "description": "HTTP server to calculate technical indicators",
     "scripts": {
-        "build": "npm run build-ts",
-        "build-ts": "tsc",
+        "build": "tsc",
         "debug": "npm run build && npm run watch-debug",
         "serve": "node dist/server.js",
         "serve-debug": "nodemon --inspect dist/server.js",
