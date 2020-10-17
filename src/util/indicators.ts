@@ -129,12 +129,34 @@ function price(value: AlphaNumeric, dataset: Array<Bar>): Array<Result> {
   return result
 }
 
+function RSI(period: number, dataset: Array<Bar>): Array<Result> {
+  let result = technicalIndicators.rsi({
+    period,
+    values: dataset.map(closePrice),
+  })
+
+  return dataset.slice(period).map((dataPoint, index) => {
+    let resultEntry = {
+      meta: {
+        ref: Ref.INDICATOR,
+        type: Indicators.RSI,
+        value: period,
+      },
+      result: result[index],
+      date: dataPoint.date,
+    }
+
+    return resultEntry
+  })
+}
+
 export const indicators: Map<string, Function> = new Map<string, Function>()
 
 export const events: Map<string, Function> = new Map<string, Function>()
 
 events.set(QueryEvent.CROSS_OVER, crossOver)
 
-indicators.set(Indicators.PRICE, price)
 indicators.set(Indicators.EMA, EMA)
 indicators.set(Indicators.MA, MA)
+indicators.set(Indicators.PRICE, price)
+indicators.set(Indicators.RSI, RSI)

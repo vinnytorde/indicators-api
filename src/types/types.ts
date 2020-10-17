@@ -12,6 +12,7 @@ export enum Ref {
 }
 
 export enum Indicators {
+  RSI = 'RSI',
   EMA = 'EMA',
   MA = 'MA',
   PRICE = 'PRICE',

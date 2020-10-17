@@ -23,6 +23,21 @@ describe('GET /health/readiness', () => {
 })
 
 describe('GET /indicators/query', () => {
+  it('should handle relative strength index', () => {
+    const marketQuery: Query = {
+      query: {
+        ref: Ref.INDICATOR,
+        type: Indicators.RSI,
+        value: 14,
+      },
+      symbol: 'ZM',
+      timeframe: Timeframe.MINUTE_5,
+      startDate: '2020-10-07T13:30:00.000Z',
+      endDate: '2020-10-07T20:00:00.000Z',
+    }
+
+    return request(app).get('/indicators/query').send(marketQuery).expect(200)
+  })
   it('should handle exponential moving averages', () => {
     const marketQuery: Query = {
       query: {
